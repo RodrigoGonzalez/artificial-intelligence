@@ -39,8 +39,7 @@ class BasePlanningProblem(Problem):
         Russell-Norvig 10.3.1 (3rd Edition)
         """
         pg = PlanningGraph(self, node.state, serialize=True, ignore_mutexes=True)
-        score = pg.h_levelsum()
-        return score
+        return pg.h_levelsum()
 
     @lru_cache()
     def h_pg_maxlevel(self, node):
@@ -54,8 +53,7 @@ class BasePlanningProblem(Problem):
         Russell-Norvig 10.3.1 (3rd Edition)
         """
         pg = PlanningGraph(self, node.state, serialize=True, ignore_mutexes=True)
-        score = pg.h_maxlevel()
-        return score
+        return pg.h_maxlevel()
 
     @lru_cache()
     def h_pg_setlevel(self, node):
@@ -68,19 +66,14 @@ class BasePlanningProblem(Problem):
         Russell-Norvig 10.3.1 (3rd Edition)
         """
         pg = PlanningGraph(self, node.state, serialize=True)
-        score = pg.h_setlevel()
-        return score
+        return pg.h_setlevel()
 
     def actions(self, state):
         """ Return the actions that can be executed in the given state. """
         possible_actions = []
         fluent = decode_state(state, self.state_map)
         for action in self.actions_list:
-            is_possible = True
-            for clause in action.precond_pos:
-                if clause not in fluent.pos:
-                    is_possible = False
-                    break
+            is_possible = all(clause in fluent.pos for clause in action.precond_pos)
             if not is_possible: continue
             for clause in action.precond_neg:
                 if clause not in fluent.neg:
@@ -93,10 +86,10 @@ class BasePlanningProblem(Problem):
         """ Return the state that results from executing the given action in the
         given state. The action must be one of self.actions(state).
         """
-        return tuple([
+        return tuple(
             (f and s not in action.effect_rem) or (s in action.effect_add)
             for f, s in zip(state, self.state_map)
-        ])
+        )
 
     def goal_test(self, state: str) -> bool:
         """ Test the state to see if goal is reached """

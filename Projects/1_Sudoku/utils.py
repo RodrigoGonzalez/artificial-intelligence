@@ -135,13 +135,10 @@ def grid2values(grid):
             Values: The value in each box, e.g., '8'. If the box has no value,
             then the value will be '123456789'.
     """
-    sudoku_grid = {}
-    for val, key in zip(grid, boxes):
-        if val == '.':
-            sudoku_grid[key] = '123456789'
-        else:
-            sudoku_grid[key] = val
-    return sudoku_grid
+    return {
+        key: '123456789' if val == '.' else val
+        for val, key in zip(grid, boxes)
+    }
 
 
 def display(values):

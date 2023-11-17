@@ -149,9 +149,8 @@ def parse_definite_clause(s):
     assert is_definite_clause(s)
     if is_symbol(s.op):
         return [], s
-    else:
-        antecedent, consequent = s.args
-        return conjuncts(antecedent), consequent
+    antecedent, consequent = s.args
+    return conjuncts(antecedent), consequent
 
 # Useful constant Exprs used in examples and code:
 A, B, C, D, E, F, G, P, Q, x, y, z = map(Expr, 'ABCDEFGPQxyz')
@@ -174,12 +173,11 @@ def tt_entails(kb, alpha):
 def tt_check_all(kb, alpha, symbols, model):
     "Auxiliary routine to implement tt_entails."
     if not symbols:
-        if pl_true(kb, model):
-            result = pl_true(alpha, model)
-            assert result in (True, False)
-            return result
-        else:
+        if not pl_true(kb, model):
             return True
+        result = pl_true(alpha, model)
+        assert result in (True, False)
+        return result
     else:
         P, rest = symbols[0], symbols[1:]
         return (tt_check_all(kb, alpha, rest, extend(model, P, True)) and
@@ -193,7 +191,7 @@ def prop_symbols(x):
     elif is_prop_symbol(x.op):
         return [x]
     else:
-        return list(set(symbol for arg in x.args for symbol in prop_symbols(arg)))
+        return list({symbol for arg in x.args for symbol in prop_symbols(arg)})
 
 
 def tt_true(s):
@@ -217,10 +215,7 @@ def pl_true(exp, model={}):
         return model.get(exp)
     elif op == '~':
         p = pl_true(args[0], model)
-        if p is None:
-            return None
-        else:
-            return not p
+        return None if p is None else not p
     elif op == '|':
         result = False
         for arg in args:
@@ -255,7 +250,7 @@ def pl_true(exp, model={}):
     elif op == '^':  # xor or 'not equivalent'
         return pt != qt
     else:
-        raise ValueError("illegal operator in logic expression" + str(exp))
+        raise ValueError(f"illegal operator in logic expression{str(exp)}")
 
 # ______________________________________________________________________________
 
@@ -309,14 +304,13 @@ def move_not_inwards(s):
     if s.op == '~':
         def NOT(b):
             return move_not_inwards(~b)
+
         a = s.args[0]
         if a.op == '~':
             return move_not_inwards(a.args[0])  # ~~A ==> A
         if a.op == '&':
             return associate('|', list(map(NOT, a.args)))
-        if a.op == '|':
-            return associate('&', list(map(NOT, a.args)))
-        return s
+        return associate('&', list(map(NOT, a.args))) if a.op == '|' else s
     elif is_symbol(s.op) or not s.args:
         return s
     else:
@@ -585,12 +579,9 @@ def unit_clause_assign(clause, model):
     P, value = None, None
     for literal in disjuncts(clause):
         sym, positive = inspect_literal(literal)
-        if sym in model:
-            if model[sym] == positive:
-                return None, None  # clause already True
-        elif P:
-            return None, None      # more than 1 unbound variable
-        else:
+        if sym in model and model[sym] == positive or sym not in model and P:
+            return None, None  # clause already True
+        elif sym not in model:
             P, value = sym, positive
     return P, value
 
@@ -603,10 +594,7 @@ def inspect_literal(literal):
     >>> inspect_literal(~P)
     (P, False)
     """
-    if literal.op == '~':
-        return literal.args[0], False
-    else:
-        return literal, True
+    return (literal.args[0], False) if literal.op == '~' else (literal, True)
 
 
 def unify(x, y, s):
@@ -626,9 +614,7 @@ def unify(x, y, s):
     elif isinstance(x, str) or isinstance(y, str):
         return None
     elif issequence(x) and issequence(y) and len(x) == len(y):
-        if not x:
-            return s
-        return unify(x[1:], y[1:], unify(x[0], y[0], s))
+        return s if not x else unify(x[1:], y[1:], unify(x[0], y[0], s))
     else:
         return None
 
@@ -678,7 +664,7 @@ def subst(s, x):
     if isinstance(x, list):
         return [subst(s, xi) for xi in x]
     elif isinstance(x, tuple):
-        return tuple([subst(s, xi) for xi in x])
+        return tuple(subst(s, xi) for xi in x)
     elif not isinstance(x, Expr):
         return x
     elif is_var_symbol(x.op):
@@ -700,10 +686,9 @@ def standardize_variables(sentence, dic=None):
     elif is_var_symbol(sentence.op):
         if sentence in dic:
             return dic[sentence]
-        else:
-            v = Expr('v_{}'.format(next(standardize_variables.counter)))
-            dic[sentence] = v
-            return v
+        v = Expr(f'v_{next(standardize_variables.counter)}')
+        dic[sentence] = v
+        return v
     else:
         return Expr(sentence.op,
                     *[standardize_variables(a, dic) for a in sentence.args])
@@ -735,7 +720,7 @@ class FolKB(KB):
         if is_definite_clause(sentence):
             self.clauses.append(sentence)
         else:
-            raise Exception("Not a definite clause: {}".format(sentence))
+            raise Exception(f"Not a definite clause: {sentence}")
 
     def ask_generator(self, query):
         return fol_bc_ask(self, query)
@@ -756,8 +741,7 @@ def fol_bc_ask(KB, query):
 def fol_bc_or(KB, goal, theta):
     for rule in KB.fetch_rules_for_goal(goal):
         lhs, rhs = parse_definite_clause(standardize_variables(rule))
-        for theta1 in fol_bc_and(KB, lhs, unify(rhs, goal, theta)):
-            yield theta1
+        yield from fol_bc_and(KB, lhs, unify(rhs, goal, theta))
 
 
 def fol_bc_and(KB, goals, theta):
@@ -768,8 +752,7 @@ def fol_bc_and(KB, goals, theta):
     else:
         first, rest = goals[0], goals[1:]
         for theta1 in fol_bc_or(KB, subst(theta, first), theta):
-            for theta2 in fol_bc_and(KB, rest, theta1):
-                yield theta2
+            yield from fol_bc_and(KB, rest, theta1)
 
 # ______________________________________________________________________________
 
@@ -808,7 +791,7 @@ def diff(y, x):
         elif op == 'log':
             return diff(u, x) / u
         else:
-            raise ValueError("Unknown op: {} in diff({}, {})".format(op, y, x))
+            raise ValueError(f"Unknown op: {op} in diff({y}, {x})")
 
 
 def simp(x):
@@ -869,7 +852,7 @@ def simp(x):
         if u == 1:
             return 0
     else:
-        raise ValueError("Unknown op: " + op)
+        raise ValueError(f"Unknown op: {op}")
     # If we fall through to here, we can not simplify further
     return Expr(op, *args)
 

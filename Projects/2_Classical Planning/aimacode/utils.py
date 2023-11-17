@@ -77,10 +77,10 @@ def memoize(fn, slot=None):
         def memoized_fn(obj, *args):
             if hasattr(obj, slot):
                 return getattr(obj, slot)
-            else:
-                val = fn(obj, *args)
-                setattr(obj, slot, val)
-                return val
+            val = fn(obj, *args)
+            setattr(obj, slot, val)
+            return val
+
     else:
         def memoized_fn(*args):
             if args not in memoized_fn.cache:
@@ -158,8 +158,10 @@ class Expr(object):
 
     # custom unary operator overloads to handle 
     def __pos__(self): return self
-    def __neg__(self): return self.args[0] if '-' == self.op else Expr("-", self)
-    def __invert__(self): return self.args[0] if '~' == self.op else Expr("~", self)
+    def __neg__(self):
+        return self.args[0] if self.op == '-' else Expr("-", self)
+    def __invert__(self):
+        return self.args[0] if self.op == '~' else Expr("~", self)
 
     # Operator overloads
     # def __neg__(self): return Expr('-', self)
@@ -211,13 +213,13 @@ class Expr(object):
     def __repr__(self):
         op = self.op
         args = [str(arg) for arg in self.args]
-        if op.isidentifier():       # f(x) or f(x, y)
-            return '{}({})'.format(op, ', '.join(args)) if args else op
+        if op.isidentifier():   # f(x) or f(x, y)
+            return f"{op}({', '.join(args)})" if args else op
         elif len(args) == 1:        # -x or -(x + 1)
             return op + args[0]
-        else:                       # (x - y)
-            opp = (' ' + op + ' ')
-            return '(' + opp.join(args) + ')'
+        else:                   # (x - y)
+            opp = f' {op} '
+            return f'({opp.join(args)})'
 
 # An 'Expression' is either an Expr or a Number.
 # Symbol is not an explicit type; it is any Expr with 0 args.
@@ -246,10 +248,7 @@ def subexpressions(x):
 
 def arity(expression):
     "The number of sub-expressions in this expression."
-    if isinstance(expression, Expr):
-        return len(expression.args)
-    else:  # expression is a number
-        return 0
+    return len(expression.args) if isinstance(expression, Expr) else 0
 
 # For operators that are not defined in Python, we allow new InfixOps:
 
@@ -258,7 +257,8 @@ class PartialExpr:
     """Given 'P |'==>'| Q, first form PartialExpr('==>', P), then combine with Q."""
     def __init__(self, op, lhs): self.op, self.lhs = op, lhs
     def __or__(self, rhs):       return Expr(self.op, self.lhs, rhs)
-    def __repr__(self):          return "PartialExpr('{}', {})".format(self.op, self.lhs)
+    def __repr__(self):
+        return f"PartialExpr('{self.op}', {self.lhs})"
 
 
 @lru_cache()
@@ -284,7 +284,7 @@ def expr_handle_infix_ops(x):
     "P |'==>'| Q"
     """
     for op in infix_ops:
-        x = x.replace(op, '|' + repr(op) + '|')
+        x = x.replace(op, f'|{repr(op)}|')
     return x
 
 

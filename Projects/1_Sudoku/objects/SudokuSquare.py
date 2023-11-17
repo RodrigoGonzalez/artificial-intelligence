@@ -44,12 +44,12 @@ def AAfilledRoundedRect(surface,rect,color,radius=0.4):
 class SudokuSquare:
     """A sudoku square class."""
     def __init__(self, number=None, offsetX=0, offsetY=0, edit="Y", xLoc=0, yLoc=0):
-        if number != None:
-            number = str(number)
-            self.color = (2, 204, 186)
-        else:
+        if number is None:
             number = ""
             self.color = (255, 255, 255)
+        else:
+            number = str(number)
+            self.color = (2, 204, 186)
         # print("FONTS", pygame.font.get_fonts())
         self.font = pygame.font.SysFont('opensans', 21)
         self.text = self.font.render(number, 1, (255, 255, 255))
@@ -98,11 +98,7 @@ class SudokuSquare:
 
 
     def change(self, number):
-        if number != None:
-            number = str(number)
-        else:
-            number = ""
-        
+        number = str(number) if number != None else ""
         if self.edit == "Y":
             self.text = self.font.render(number, 1, (0, 0, 0))
             self.draw()

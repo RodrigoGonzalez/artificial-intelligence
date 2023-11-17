@@ -6,11 +6,9 @@ projects = ['classical_planning']
 filenames_all = ['my_planning_graph.py', 'report.pdf']
 
 def submit(args):
-    filenames = []
-    for filename in filenames_all:
-        if os.path.isfile(filename):
-            filenames.append(filename)
-
+    filenames = [
+        filename for filename in filenames_all if os.path.isfile(filename)
+    ]
     if 'my_planning_graph.py' not in filenames:
         raise RuntimeError(
             "The file 'my_planning_graph.py' was not found in your current directory. This " +

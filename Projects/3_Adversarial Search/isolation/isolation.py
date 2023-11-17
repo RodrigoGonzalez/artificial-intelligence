@@ -100,8 +100,9 @@ class Isolation(NamedTuple('Isolation', [('board', int), ('ply_count', int), ('l
             A new state object with the input move applied.
         """
         player_location = self.locs[self.player()]
-        assert player_location is None or action in _ACTIONSET, \
-            "{} is not a valid action from the set {}".format(action, list(Action))
+        assert (
+            player_location is None or action in _ACTIONSET
+        ), f"{action} is not a valid action from the set {list(Action)}"
         if player_location is None:
             player_location = 0
         player_location = int(action) + player_location
@@ -241,12 +242,12 @@ class DebugState(Isolation):
         board = self.board << 2
         for loc in range(_SIZE + 2):
             if loc > 2 and loc % (_WIDTH + 2) == 0:
-                out.write("|" + os.linesep + rowsep + os.linesep)
-            if loc % (_WIDTH + 2) == 0 or loc % (_WIDTH + 2) == 1:
+                out.write(f"|{os.linesep}{rowsep}{os.linesep}")
+            if loc % (_WIDTH + 2) in [0, 1]:
                 continue
             sym = OPEN if (board & (1 << loc)) else CLOSED
             if loc - 2 == self.locs[0]: sym = self.player_symbols[0]
             if loc - 2 == self.locs[1]: sym = self.player_symbols[1]
             out.write(cell.format(sym))
-        out.write("|" + os.linesep + rowsep + os.linesep)
+        out.write(f"|{os.linesep}{rowsep}{os.linesep}")
         return '\n'.join(l[::-1] for l in out.getvalue().split('\n')[::-1]) + os.linesep

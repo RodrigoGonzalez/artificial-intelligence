@@ -19,8 +19,8 @@ def make_node(action, no_op=False):
     negative preconditions and effects into sets. This allows efficient membership
     testing and perserves logical negation semantics on the symbolic actions.
     """
-    preconditions = set(action.precond_pos) | set([~p for p in action.precond_neg])
-    effects = set(action.effect_add) | set([~e for e in action.effect_rem])
+    preconditions = set(action.precond_pos) | {~p for p in action.precond_neg}
+    effects = set(action.effect_add) | {~e for e in action.effect_rem}
     return ActionNode(str(action), frozenset(preconditions), frozenset(effects), no_op)
 
 
@@ -36,9 +36,10 @@ def makeNoOp(literal):
     NoOp::~At(place) == ~(NoOp::At(place) -- NOTE: NoOp::~At(place) is not a valid
     action, but the correct semantics are handled and enforced automatically.
     """
-    action = Expr("NoOp::" + literal.op, literal.args)
-    return (Action(action, [set([literal]), []], [set([literal]), []]),
-            Action(~action, [set([~literal]), []], [set([~literal]), []]))
+    action = Expr(f"NoOp::{literal.op}", literal.args)
+    return Action(action, [{literal}, []], [{literal}, []]), Action(
+        ~action, [{~literal}, []], [{~literal}, []]
+    )
 
 
 class ActionNode(object):
@@ -146,9 +147,12 @@ class BaseLayer(MutableSet):
         return len(self.__store)
 
     def __eq__(self, other):
-        return (len(self) == len(other) and
-            len(self._mutexes) == len(other._mutexes) and
-            0 == len(self ^ other) and self._mutexes == other._mutexes)
+        return (
+            len(self) == len(other)
+            and len(self._mutexes) == len(other._mutexes)
+            and len(self ^ other) == 0
+            and self._mutexes == other._mutexes
+        )
 
     def add(self, item):
         self.__store.add(item)

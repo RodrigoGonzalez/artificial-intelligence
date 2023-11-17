@@ -16,11 +16,11 @@ def play(values, result, history):
 
     clock = pygame.time.Clock()
 
+    initXLoc = 0
+    initYLoc = 0
     while True:
         pygame.event.pump()
         theSquares = []
-        initXLoc = 0
-        initYLoc = 0
         startX, startY, editable, number = 0, 0, "N", 0
         for y in range(9):
             for x in range(9):

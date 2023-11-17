@@ -34,7 +34,7 @@ Match = namedtuple("Match", "players initial_state time_limit match_id debug_fla
 def _run_matches(matches, name, num_processes=NUM_PROCS, debug=False):
     results = []
     pool = Pool(1) if debug else Pool(num_processes)
-    print("Running {} games:".format(len(matches)))
+    print(f"Running {len(matches)} games:")
     for result in pool.imap_unordered(play, matches):
         print("+" if result[0].name == name else '-', end="")
         results.append(result)
@@ -78,19 +78,24 @@ def play_matches(custom_agent, test_agent, cli_args):
     matches = []
     for match_id in range(cli_args.rounds):
         state = Isolation()
-        matches.append(Match(
-            players=(test_agent, custom_agent),
-            initial_state=state,
-            time_limit=cli_args.time_limit,
-            match_id=2 * match_id,
-            debug_flag=cli_args.debug))
-        matches.append(Match(
-            players=(custom_agent, test_agent),
-            initial_state=state,
-            time_limit=cli_args.time_limit,
-            match_id=2 * match_id + 1,
-            debug_flag=cli_args.debug))
-
+        matches.extend(
+            (
+                Match(
+                    players=(test_agent, custom_agent),
+                    initial_state=state,
+                    time_limit=cli_args.time_limit,
+                    match_id=2 * match_id,
+                    debug_flag=cli_args.debug,
+                ),
+                Match(
+                    players=(custom_agent, test_agent),
+                    initial_state=state,
+                    time_limit=cli_args.time_limit,
+                    match_id=2 * match_id + 1,
+                    debug_flag=cli_args.debug,
+                ),
+            )
+        )
     # Run all matches -- must be done before fair matches in order to populate
     # the first move from each player; these moves are reused in the fair matches
     results = _run_matches(matches, custom_agent.name, cli_args.processes)
@@ -184,13 +189,25 @@ if __name__ == "__main__":
 
     logging.basicConfig(filename="matches.log", filemode="w", level=logging.DEBUG)
     logging.info(
-        "Search Configuration:\n" +
-        "Opponent: {}\n".format(args.opponent) +
-        "Rounds: {}\n".format(args.rounds) +
-        "Fair Matches: {}\n".format(args.fair_matches) +
-        "Time Limit: {}\n".format(args.time_limit) +
-        "Processes: {}\n".format(args.processes) +
-        "Debug Mode: {}".format(args.debug)
+        (
+            (
+                (
+                    (
+                        (
+                            (
+                                "Search Configuration:\n"
+                                + f"Opponent: {args.opponent}\n"
+                            )
+                            + f"Rounds: {args.rounds}\n"
+                        )
+                        + f"Fair Matches: {args.fair_matches}\n"
+                    )
+                    + f"Time Limit: {args.time_limit}\n"
+                )
+                + f"Processes: {args.processes}\n"
+            )
+            + f"Debug Mode: {args.debug}"
+        )
     )
 
     main(args)

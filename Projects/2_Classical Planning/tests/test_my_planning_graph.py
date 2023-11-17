@@ -35,11 +35,15 @@ class BaseMutexTest(unittest.TestCase):
         self.neg_literals = [~x for x in self.pos_literals]
         self.literal_layer = LiteralLayer(self.pos_literals + self.neg_literals, ActionLayer())
         self.literal_layer.update_mutexes()
-        
+
         # independent actions for testing mutex
         self.actions = [
-            make_node(Action(expr('Go(here)'), [set(), set()], [set([at_here]), set()])),
-            make_node(Action(expr('Go(there)'), [set(), set()], [set([at_there]), set()]))
+            make_node(
+                Action(expr('Go(here)'), [set(), set()], [{at_here}, set()])
+            ),
+            make_node(
+                Action(expr('Go(there)'), [set(), set()], [{at_there}, set()])
+            ),
         ]
         self.no_ops = [make_node(x) for x in chain(*(makeNoOp(l) for l in self.pos_literals))]
         self.action_layer = ActionLayer(self.no_ops + self.actions, self.literal_layer)
@@ -59,8 +63,8 @@ class Test_1_InconsistentEffectsMutex(BaseMutexTest):
 
         X, Y = expr('FakeFluent_X'), expr('FakeFluent_Y')
         self.fake_not_inconsistent_effects_actions = [
-            make_node(Action(expr('FakeAction(X)'), [set([X]), set()], [set([X]), set()])),
-            make_node(Action(expr('FakeAction(Y)'), [set([Y]), set()], [set([Y]), set()])),
+            make_node(Action(expr('FakeAction(X)'), [{X}, set()], [{X}, set()])),
+            make_node(Action(expr('FakeAction(Y)'), [{Y}, set()], [{Y}, set()])),
         ]
 
     def test_1a_inconsistent_effects_mutex(self):
@@ -96,9 +100,9 @@ class Test_1_InconsistentEffectsMutex(BaseMutexTest):
         # then they should appear in every later layer of the planning graph
         for idx, layer in enumerate(self.cake_pg.action_layers):
             if set(self.inconsistent_effects_actions) <= layer:
-                self.assertTrue(layer.is_mutex(*self.inconsistent_effects_actions),
-                    ("Actions {} and {} were not mutex in layer {} of the planning graph").format(
-                        self.inconsistent_effects_actions[0], self.inconsistent_effects_actions[1], idx)
+                self.assertTrue(
+                    layer.is_mutex(*self.inconsistent_effects_actions),
+                    f"Actions {self.inconsistent_effects_actions[0]} and {self.inconsistent_effects_actions[1]} were not mutex in layer {idx} of the planning graph",
                 )
 
 
@@ -112,8 +116,8 @@ class Test_2_InterferenceMutex(BaseMutexTest):
 
         X, Y = expr('FakeFluent_X'), expr('FakeFluent_Y')
         self.fake_interference_actions = [
-            make_node(Action(expr('FakeAction(X)'), [set([X]), set()], [set([X]), set()])),
-            make_node(Action(expr('FakeAction(Y)'), [set([Y]), set()], [set([Y]), set()])),
+            make_node(Action(expr('FakeAction(X)'), [{X}, set()], [{X}, set()])),
+            make_node(Action(expr('FakeAction(Y)'), [{Y}, set()], [{Y}, set()])),
         ]
 
     def test_2a_interference_mutex(self):
@@ -203,9 +207,9 @@ class Test_4_CompetingNeedsMutex(BaseMutexTest):
         #  A, B, and C are pairwise mutex, and another where they are not
         A, B, C = expr('FakeFluent_A'), expr('FakeFluent_B'), expr('FakeFluent_C')
         self.fake_competing_needs_actions = [
-            make_node(Action(expr('FakeAction(A)'), [set([A]), set()], [set([A]), set()])),
-            make_node(Action(expr('FakeAction(B)'), [set([B]), set()], [set([B]), set()])),
-            make_node(Action(expr('FakeAction(C)'), [set([C]), set()], [set([C]), set()]))
+            make_node(Action(expr('FakeAction(A)'), [{A}, set()], [{A}, set()])),
+            make_node(Action(expr('FakeAction(B)'), [{B}, set()], [{B}, set()])),
+            make_node(Action(expr('FakeAction(C)'), [{C}, set()], [{C}, set()])),
         ]
         competing_layer = LiteralLayer([A, B, C], ActionLayer())
         for a1, a2 in combinations([A, B, C], 2): competing_layer.set_mutex(a1, a2)
@@ -252,9 +256,9 @@ class Test_4_CompetingNeedsMutex(BaseMutexTest):
         # competing needs mutexes are dynamic -- they only appear in some levels of the planning graph
         for idx, layer in enumerate(self.cake_pg.action_layers):
             if set(self.competing_needs_actions) <= layer:
-                self.assertTrue(layer.is_mutex(*self.competing_needs_actions),
-                    ("Actions {} and {} were not mutex in layer {} of the planning graph").format(
-                        self.competing_needs_actions[0], self.competing_needs_actions[1], idx)
+                self.assertTrue(
+                    layer.is_mutex(*self.competing_needs_actions),
+                    f"Actions {self.competing_needs_actions[0]} and {self.competing_needs_actions[1]} were not mutex in layer {idx} of the planning graph",
                 )
         
 

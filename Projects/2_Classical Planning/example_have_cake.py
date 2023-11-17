@@ -73,15 +73,15 @@ if __name__ == '__main__':
     print("**** Have Cake example problem setup ****")
     print("Fluents in this problem are:")
     for f in p.state_map:
-        print('   {}'.format(f))
+        print(f'   {f}')
 
-    print("Initial state for this problem is {}".format(p.initial))
+    print(f"Initial state for this problem is {p.initial}")
     print("Actions for this domain are:")
     for a in p.actions_list:
-        print('   {}{}'.format(a.name, a.args))
+        print(f'   {a.name}{a.args}')
     print("Goal requirement for this problem are:")
     for g in p.goal:
-        print('   {}'.format(g))
+        print(f'   {g}')
     print()
     print("*** Breadth First Search")
     run_search(p, breadth_first_search)

@@ -89,7 +89,7 @@ class Node:
             self.depth = parent.depth + 1
 
     def __repr__(self):
-        return "<Node %s>" % (self.state,)
+        return f"<Node {self.state}>"
 
     def __lt__(self, node):
         return self.state < node.state
@@ -297,10 +297,7 @@ def recursive_best_first_search(problem, h=None):
             best = successors[0]
             if best.f > flimit:
                 return None, best.f
-            if len(successors) > 1:
-                alternative = successors[1].f
-            else:
-                alternative = infinity
+            alternative = successors[1].f if len(successors) > 1 else infinity
             result, best.f = RBFS(problem, best, min(flimit, alternative))
             if result is not None:
                 return result, best.f

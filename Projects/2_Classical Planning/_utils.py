@@ -25,15 +25,17 @@ def run_search(problem, search_function, parameter=None):
         node = search_function(ip)
     end = timer()
     print("\n# Actions   Expansions   Goal Tests   New Nodes")
-    print("{}\n".format(ip))
+    print(f"{ip}\n")
     show_solution(node, end - start)
     print()
 
 
 def show_solution(node, elapsed_time):
-    print("Plan length: {}  Time elapsed in seconds: {}".format(len(node.solution()), elapsed_time))
+    print(
+        f"Plan length: {len(node.solution())}  Time elapsed in seconds: {elapsed_time}"
+    )
     for action in node.solution():
-        print("{}{}".format(action.name, action.args))
+        print(f"{action.name}{action.args}")
 
 
 def create_expressions(str_list):
@@ -65,7 +67,9 @@ def make_relations(name, *args, key=lambda x: True):
 
     See additional examples in example_have_cake.py and air_cargo_problems.py 
     """
-    return create_expressions("{}({})".format(name, ", ".join(c)) for c in product(*args) if key(c))
+    return create_expressions(
+        f'{name}({", ".join(c)})' for c in product(*args) if key(c)
+    )
 
 
 class FluentState:
@@ -99,11 +103,8 @@ def conjunctive_sentence(pos_list, neg_list):
     A conjunctive sentence (i.e., a sequence of clauses connected by logical AND)
     e.g. "At(C1, SFO) ∧ ~At(P1, SFO)"
     """
-    clauses = []
-    for f in pos_list:
-        clauses.append(expr("{}".format(f)))
-    for f in neg_list:
-        clauses.append(expr("~{}".format(f)))
+    clauses = [expr(f"{f}") for f in pos_list]
+    clauses.extend(expr(f"~{f}") for f in neg_list)
     return associate('&', clauses)
 
 
@@ -127,7 +128,7 @@ def encode_state(fs, fluent_map):
     -------
     tuple of True/False elements corresponding to the fluents in fluent_map
     """
-    return tuple([f in fs.pos for f in fluent_map])
+    return tuple(f in fs.pos for f in fluent_map)
 
 
 def decode_state(state, fluent_map):

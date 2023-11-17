@@ -62,8 +62,9 @@ def manual():
     main(p_choices, s_choices)
     print("\nYou can run this selection again automatically from the command " +
           "line\nwith the following command:")
-    print("\n  python {} -p {} -s {}\n".format(
-        __file__, " ".join(p_choices), " ".join(s_choices)))
+    print(
+        f'\n  python {__file__} -p {" ".join(p_choices)} -s {" ".join(s_choices)}\n'
+    )
 
 
 def main(p_choices, s_choices):
@@ -72,8 +73,8 @@ def main(p_choices, s_choices):
 
     for pname, problem_fn in problems:
         for sname, search_fn, heuristic in searches:
-            hstring = heuristic if not heuristic else " with {}".format(heuristic)
-            print("\nSolving {} using {}{}...".format(pname, sname, hstring))
+            hstring = heuristic if not heuristic else f" with {heuristic}"
+            print(f"\nSolving {pname} using {sname}{hstring}...")
 
             problem_instance = problem_fn()
             heuristic_fn = None if not heuristic else getattr(problem_instance, heuristic)
